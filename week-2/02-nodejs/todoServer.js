@@ -39,11 +39,87 @@
 
   Testing the server - run `npm run test-todoServer` command in terminal
  */
-  const express = require('express');
-  const bodyParser = require('body-parser');
-  
-  const app = express();
-  
-  app.use(bodyParser.json());
-  
-  module.exports = app;
+const express = require("express");
+const bodyParser = require("body-parser");
+
+const app = express();
+
+app.use(bodyParser.json());
+
+let todos = [];
+
+app.get("/todos", (req, res) => {
+  res.json(todos);
+});
+
+app.get("/todos/:id", (req, res) => {
+  const todo = todos.find((todo) => todo.id === parseInt(req.params.id));
+  if (!todo) {
+    res.status(404).send();
+  } else {
+    res.json(todo);
+  }
+});
+
+app.post("/todos", (req, res) => {
+  const newTodo = {
+    id: Math.floor(Math.random() * 1000000),
+    title: req.body.title,
+    description: req.body.description,
+  };
+  todos.push(newTodo);
+  res.status(201).json(newTodo);
+});
+
+app.put("/todos/:id", (req, res) => {
+  // brute force approach
+
+  // const findTodo = todos.find((todo) => todo.id === parseInt(req.params.id));
+  // if (!findTodo) {
+  //   res.status(404).send();
+  // } else {
+  //   const updatedTodo = {
+  //     id: parseInt(req.params.id),
+  //     title: req.body.title,
+  //     description: req.body.description,
+  //   };
+  //   let updatedTodoArray = todos.map((todo) =>
+  //     todo.id === parseInt(req.params.id) ? updatedTodo : todo
+  //   );
+  //   todos = updatedTodoArray;
+  // }
+
+  // Optimized approach
+
+  const todoIndex = todos.findIndex((t) => t.id === parseInt(req.params.id));
+  if (todoIndex === -1) {
+    res.status(404).send();
+  } else {
+    todos[todoIndex].title = req.body.title;
+    todos[todoIndex].description = req.body.description;
+    res.json(todos[todoIndex]);
+  }
+});
+
+app.delete("/todos/:id", (req, res) => {
+  const todoIndex = todos.findIndex((t) => t.id === parseInt(req.params.id));
+  if (todoIndex === -1) {
+    res.status(404).send();
+  } else {
+    let updatedTodoArray = todos.filter((todo, index) => index !== todoIndex);
+    todos = updatedTodoArray;
+
+    // OR
+
+    // todos.splice(todoIndex, 1);
+
+    res.status(200).json(todos);
+  }
+});
+
+// for all other routes, return 404
+app.use((req, res, next) => {
+  res.status(404).send();
+});
+
+module.exports = app;
